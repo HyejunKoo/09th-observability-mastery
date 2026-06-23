@@ -12,10 +12,22 @@
 - Grafana + Prometheus 도입을 통한 VMware Aria Operations(vROPs) 및 VMware Aria Operations for Logs(vRLI) 보완
 - 기존 한계점
   - 대시보드 커스터마이징 자유도 제한
+<<<<<<< Updated upstream
   - 그룹사별 세분화된 뷰 구성 어려움
   - 알림(Alert) 유연성 부족
   - 운영자 관점 직관적 시각화 미흡
 - 데이터 수집: VM 리소스, ESXi 호스트, 로그 이벤트, Horizon 세션
+=======
+    - VMware 관점의 고정된 뷰만 제공
+    - vROPs + vRLI + 기타 모든 데이터를 한 화면에서 통합하여 확인 가능
+  - 그룹사별 세분화된 뷰 구성 어려움
+  - 알림(Alert) 유연성 부족
+    - Grafana Alert는 조건/채널 자유롭게 설정 가능
+  - 운영자 관점 직관적 시각화 미흡
+- 데이터 수집: VM 리소스, ESXi 호스트, 로그 이벤트, Horizon 세션
+  - Grafana → 통합 대시보드
+  - Prometheus → 보조 메트릭 수집
+>>>>>>> Stashed changes
 
 **각 도구의 포지션**
 |구분|vROPs|vRLI|Grafana|Prometheus|
@@ -28,7 +40,46 @@
 ## 1.2 목표 아키텍처 
 
 ```
+<<<<<<< Updated upstream
 
+=======
+┌──────────────────────────────────────────────────────────────────────┐
+│                             기존 인프라                                 │
+│                                                                      │
+│      ┌────────────────────┐          ┌────────────────────┐          │
+│      │     ESXi Host      │          │    Horizon VDI     │          │
+│      │                    │          │     Guest OS       │          │
+│      └─────────┬──────────┘          └─────────┬──────────┘          │
+│                │      인프라 / VM 상태 데이터       │                     │
+│                └───────────────┬───────────────┘                     │
+│                                │                                     │
+│                                ▼                                     │
+│      ┌────────────────────────────────────────────────────┐          │
+│      │          VMware Aria Operations                    │          │
+│      │          vROps REST API                            │          │
+│      └─────────────────────────┬──────────────────────────┘          │
+│                                │                                     │
+│                           REST API 연계                               │
+│                                │                                     │
+│                                ▼                                     │
+│      ┌────────────────────────────────────────────────────┐          │
+│      │                    테스트 VDI                        │          │
+│      │                                                    │          │
+│      │     ┌──────────────────┐    ┌──────────────────┐   │          │
+│      │     │    Prometheus    │    │     Grafana      │   │          │
+│      │     │      :9090       │    │      :3000       │   │          │
+│      │     └────────┬─────────┘    └────────┬─────────┘   │          │
+│      │              │ scrape                │             │          │
+│      │              └───────────┬───────────┘             │          │
+│      │                          │                         │          │
+│      │     ┌────────────────────▼────────────────────┐    │          │
+│      │     │          windows_exporter :9182         │    │          │
+│      │     │     CPU / Memory / Disk / Network       │    │          │
+│      │     └─────────────────────────────────────────┘    │          │
+│      └────────────────────────────────────────────────────┘          │
+│                                                                      │
+└──────────────────────────────────────────────────────────────────────┘
+>>>>>>> Stashed changes
 ```
 
 # 1-3. 환경 구성
@@ -42,12 +93,51 @@
 # 2. 수행 단계별 결과
 
 ## 2-1. Prometheus 설치 및 실행
+<<<<<<< Updated upstream
 
 ## 2-2. windows_exporter 설치
 
 ## 2-3. Grafana 설치 및 Prometheus 연동
 
 ## 2-4. vROPs REST API 연동
+=======
+```
+# 바이너리 다운로드 후 실행
+cd C:\prometheus
+.\prometheus.exe --config.file=prometheus.yml
+```
+- prometheus.yml 설정 완료
+- http://localhost:9090 접속 확인
+
+## 2-2. windows_exporter 설치
+```
+# msi 설치 후 자동 서비스 등록
+# 기본 포트 9182
+```
+- http://localhost:9182/metrics 메트릭 수집 확인
+- Prometheus Targets에서 UP 상태 확인
+
+## 2-3. Grafana 설치 및 Prometheus 연동
+- Grafana 서비스 설치 완료
+- http://localhost:3000 접속 확인
+- Prometheus Data Source 연동 완료
+
+## 2-4. vROPs REST API 연동
+```
+# 토큰 발급 성공
+$response = Invoke-RestMethod `
+    -Uri "https://{vROPs 주소}/suite-api/api/auth/token/acquire" `
+    -Method POST `
+    -Headers $authHeaders `
+    -Body $body
+
+# 호스트 목록 조회 성공
+$hosts = Invoke-RestMethod `
+    -Uri "https://{vROPs 주소}/suite-api/api/resources?resourceKind=HostSystem" `
+    -Method GET `
+    -Headers $headers
+```
+>>>>>>> Stashed changes
 
 ## 2-5. Grafana Infinity Plugin 연동 (진행중)
 - Infinity Plugin 설치 완료
