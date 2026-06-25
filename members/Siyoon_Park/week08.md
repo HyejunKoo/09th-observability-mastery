@@ -12,12 +12,10 @@
 - Grafana + Prometheus 도입을 통한 VMware Aria Operations(vROPs) 및 VMware Aria Operations for Logs(vRLI) 보완
 - 기존 한계점
   - 대시보드 커스터마이징 자유도 제한
-<<<<<<< Updated upstream
   - 그룹사별 세분화된 뷰 구성 어려움
   - 알림(Alert) 유연성 부족
   - 운영자 관점 직관적 시각화 미흡
 - 데이터 수집: VM 리소스, ESXi 호스트, 로그 이벤트, Horizon 세션
-=======
     - VMware 관점의 고정된 뷰만 제공
     - vROPs + vRLI + 기타 모든 데이터를 한 화면에서 통합하여 확인 가능
   - 그룹사별 세분화된 뷰 구성 어려움
@@ -27,7 +25,6 @@
 - 데이터 수집: VM 리소스, ESXi 호스트, 로그 이벤트, Horizon 세션
   - Grafana → 통합 대시보드
   - Prometheus → 보조 메트릭 수집
->>>>>>> Stashed changes
 
 **각 도구의 포지션**
 |구분|vROPs|vRLI|Grafana|Prometheus|
@@ -37,12 +34,9 @@
 |라이선스|유료(VMware)|유료(VMware)|무료|무료|
 |커스터마이징|제한적|제한적|매우 자유로움|자유로움|
 
-## 1.2 목표 아키텍처 
+## 1.2 목표 아키텍처
 
 ```
-<<<<<<< Updated upstream
-
-=======
 ┌──────────────────────────────────────────────────────────────────────┐
 │                             기존 인프라                                 │
 │                                                                      │
@@ -93,14 +87,6 @@
 # 2. 수행 단계별 결과
 
 ## 2-1. Prometheus 설치 및 실행
-<<<<<<< Updated upstream
-
-## 2-2. windows_exporter 설치
-
-## 2-3. Grafana 설치 및 Prometheus 연동
-
-## 2-4. vROPs REST API 연동
-=======
 ```
 # 바이너리 다운로드 후 실행
 cd C:\prometheus
@@ -137,7 +123,6 @@ $hosts = Invoke-RestMethod `
     -Method GET `
     -Headers $headers
 ```
->>>>>>> Stashed changes
 
 ## 2-5. Grafana Infinity Plugin 연동 (진행중)
 - Infinity Plugin 설치 완료
