@@ -1,0 +1,159 @@
+# 인프라 모니터링 고도화
+
+## Grafana + Prometheus 기반 Observability 플랫폼 구축 PoC
+- 목적: 인프라 모니터링 고도화를 위한 오픈소스 기반 Observability 플랫폼 검토 및 PoC 수행
+
+---
+
+# 1. 개요
+
+## 1.1 배경 및 목적
+
+- Grafana + Prometheus 도입을 통한 VMware Aria Operations(vROPs) 및 VMware Aria Operations for Logs(vRLI) 보완
+- 기존 한계점
+  - 대시보드 커스터마이징 자유도 제한
+  - 그룹사별 세분화된 뷰 구성 어려움
+  - 알림(Alert) 유연성 부족
+  - 운영자 관점 직관적 시각화 미흡
+- 데이터 수집: VM 리소스, ESXi 호스트, 로그 이벤트, Horizon 세션
+    - VMware 관점의 고정된 뷰만 제공
+    - vROPs + vRLI + 기타 모든 데이터를 한 화면에서 통합하여 확인 가능
+  - 그룹사별 세분화된 뷰 구성 어려움
+  - 알림(Alert) 유연성 부족
+    - Grafana Alert는 조건/채널 자유롭게 설정 가능
+  - 운영자 관점 직관적 시각화 미흡
+- 데이터 수집: VM 리소스, ESXi 호스트, 로그 이벤트, Horizon 세션
+  - Grafana → 통합 대시보드
+  - Prometheus → 보조 메트릭 수집
+
+**각 도구의 포지션**
+|구분|vROPs|vRLI|Grafana|Prometheus|
+|--|--|--|--|--|
+|역할|인프라 성능 모니터링|로그 수집/분석|시각화/대시보드|메트릭 수집/저장|
+|특화|VMware 생태계|로그 분석|커스텀 대시보드|범용 메트릭|
+|라이선스|유료(VMware)|유료(VMware)|무료|무료|
+|커스터마이징|제한적|제한적|매우 자유로움|자유로움|
+
+## 1.2 목표 아키텍처
+
+```
+┌──────────────────────────────────────────────────────────────────────┐
+│                             기존 인프라                                 │
+│                                                                      │
+│      ┌────────────────────┐          ┌────────────────────┐          │
+│      │     ESXi Host      │          │    Horizon VDI     │          │
+│      │                    │          │     Guest OS       │          │
+│      └─────────┬──────────┘          └─────────┬──────────┘          │
+│                │      인프라 / VM 상태 데이터       │                     │
+│                └───────────────┬───────────────┘                     │
+│                                │                                     │
+│                                ▼                                     │
+│      ┌────────────────────────────────────────────────────┐          │
+│      │          VMware Aria Operations                    │          │
+│      │          vROps REST API                            │          │
+│      └─────────────────────────┬──────────────────────────┘          │
+│                                │                                     │
+│                           REST API 연계                               │
+│                                │                                     │
+│                                ▼                                     │
+│      ┌────────────────────────────────────────────────────┐          │
+│      │                    테스트 VDI                        │          │
+│      │                                                    │          │
+│      │     ┌──────────────────┐    ┌──────────────────┐   │          │
+│      │     │    Prometheus    │    │     Grafana      │   │          │
+│      │     │      :9090       │    │      :3000       │   │          │
+│      │     └────────┬─────────┘    └────────┬─────────┘   │          │
+│      │              │ scrape                │             │          │
+│      │              └───────────┬───────────┘             │          │
+│      │                          │                         │          │
+│      │     ┌────────────────────▼────────────────────┐    │          │
+│      │     │          windows_exporter :9182         │    │          │
+│      │     │     CPU / Memory / Disk / Network       │    │          │
+│      │     └─────────────────────────────────────────┘    │          │
+│      └────────────────────────────────────────────────────┘          │
+│                                                                      │
+└──────────────────────────────────────────────────────────────────────┘
+>>>>>>> Stashed changes
+```
+
+# 1-3. 환경 구성
+|항목|내용|
+|--|--|
+|테스트 환경|Windows VDI + vROPs|
+|Prometheus 버전|3.5.4|
+|Grafanas 버전|OSS 최신버전|
+|windows_exporter 버전|0.31.7|
+
+# 2. 수행 단계별 결과
+
+## 2-1. Prometheus 설치 및 실행
+```
+# 바이너리 다운로드 후 실행
+cd C:\prometheus
+.\prometheus.exe --config.file=prometheus.yml
+```
+- prometheus.yml 설정 완료
+- http://localhost:9090 접속 확인
+
+## 2-2. windows_exporter 설치
+```
+# msi 설치 후 자동 서비스 등록
+# 기본 포트 9182
+```
+- http://localhost:9182/metrics 메트릭 수집 확인
+- Prometheus Targets에서 UP 상태 확인
+
+## 2-3. Grafana 설치 및 Prometheus 연동
+- Grafana 서비스 설치 완료
+- http://localhost:3000 접속 확인
+- Prometheus Data Source 연동 완료
+
+## 2-4. vROPs REST API 연동
+```
+# 토큰 발급 성공
+$response = Invoke-RestMethod `
+    -Uri "https://{vROPs 주소}/suite-api/api/auth/token/acquire" `
+    -Method POST `
+    -Headers $authHeaders `
+    -Body $body
+
+# 호스트 목록 조회 성공
+$hosts = Invoke-RestMethod `
+    -Uri "https://{vROPs 주소}/suite-api/api/resources?resourceKind=HostSystem" `
+    -Method GET `
+    -Headers $headers
+```
+
+## 2-5. Grafana Infinity Plugin 연동 (진행중)
+- Infinity Plugin 설치 완료
+- vROPs API 연결 설정 진행 중
+- SSL 인증서 이슈 해결 완료
+- 토큰 인증 방식 최적화 진행 중
+
+
+# 3. 향후 계획
+1. Grafana ↔ vROPs API 연동 완성
+   - ESXi 호스트 리소스 대시보드 구성
+2. vRLI API 연동
+   - 로그 이벤트 시각화 대시보드 구성
+3. Horizon API 연동
+   - 그룹사별 세션 현황 대시보드 구성
+
+# 4. 참고
+
+## 4-1. 이슈 및 해결 내역
+
+|이슈|원인|해결 방법|
+|--|--|--|
+|Prometheus 실행 오류|data\queries.active 파일 점유|파일 삭제 후 재실행|
+|vROPs API XML 응답|Accept 헤더 누락|Accept: application/json 헤더 추가|
+|vROPs API TLS 오류|SSL 인증서 검증 실패|TLS 1.2 명시 + 검증 우회 설정|
+|windows_exporter UNKNOWN|최초 수집 대기|15~30초 대기 후 UP 전환 확인|
+|대시보드 N/A|대시보드 버전 불일치|메트릭명 기준 맞는 ID로 교체|
+
+## 4-2. 보안 고려사항
+
+|항목|조치|
+|--|--|
+|API 토큰|주기적 갱신 필요 (유효시간 존재)|
+|네트워크|기존 허용된 통신 경로만 사용|
